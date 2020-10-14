@@ -208,6 +208,19 @@ local ContainerTypes = {
 			end,
 		GetFreeSlots = function(self, bagID)
 				local freeSlots, bagType = GetContainerNumFreeSlots(bagID)
+                if (bagID == -3) then 
+                    if not addon.isBankOpen then
+                        -- Player isn't at the bank, so GetContainerNumFreeSlots always returns zero
+                        -- Have to count the number of slots instead
+                        local count = 0
+                        for i = 1, 98 do
+                            if GetContainerItemLink(-3, i) then
+                                count = count + 1
+                            end
+                        end
+                        freeSlots = 98 - count
+                    end
+                end
 				return freeSlots, bagType
 			end,
 		GetLink = function(self, slotID, bagID)
@@ -329,7 +342,7 @@ local function ScanContainer(bagID, containerType)
 	
 	newBag.size = Container:GetSize(bagID)
 	newBag.freeslots, newBag.bagtype = Container:GetFreeSlots(bagID)
-	
+
 	-- Scan from 1 to bagsize for normal bags or guild bank tabs, but from 40 to 67 for main bank slots
 	-- local baseIndex = (containerType == BANK) and 39 or 0
 	local baseIndex = 0
@@ -377,7 +390,7 @@ local function ScanContainer(bagID, containerType)
     else
         return nil
     end
-    
+
     -- detect if the table is empty
     local next = next
     if next(changes) == nil then
@@ -478,9 +491,13 @@ local function ScanVoidStorage()
 	for tab = 1, 2 do
 		bag = addon.ThisCharacter.Containers[VOID_STORAGE_TAB .. tab]
 		bag.size = 80
+        bag.freeslots = 80
 	
 		for slot = 1, bag.size do
 			itemID = GetVoidItemInfo(tab, slot)
+            if itemID then
+                bag.freeslots = bag.freeslots - 1
+            end
 			bag.ids[slot] = itemID
 		end
 	end
@@ -838,6 +855,24 @@ local function _GetNumFreeBankSlots(character)
 	return character.numFreeBankSlots
 end
 
+local function _GetNumFreeReagentBankSlots(character)
+    if not character.Containers then return 0 end
+    if not character.Containers[-3] then return 0 end
+    return character.Containers["Bag-3"].freeslots
+end
+
+local function _GetNumFreeVoidStorageSlots(character)
+    local tab1Slots = 0
+    if character.Containers["VoidStorage.Tab1"] then
+        tab1Slots = character.Containers["VoidStorage.Tab1"].freeslots
+    end
+    local tab2Slots = 0
+    if character.Containers["VoidStorage.Tab2"] then
+        tab2Slots = character.Containers["VoidStorage.Tab2"].freeslots
+    end
+    return tab1Slots + tab2Slots
+end
+
 -- Seems like this should be updated to include tab1 / tab2.
 local function _GetVoidStorageItem(character, index)
 	return character.Containers["VoidStorage"].ids[index]
@@ -956,6 +991,8 @@ local PublicMethods = {
 	GetNumFreeBagSlots = _GetNumFreeBagSlots,
 	GetNumBankSlots = _GetNumBankSlots,
 	GetNumFreeBankSlots = _GetNumFreeBankSlots,
+    GetNumFreeReagentBankSlots = _GetNumFreeReagentBankSlots,
+    GetNumFreeVoidStorageSlots = _GetNumFreeVoidStorageSlots, 
 	GetVoidStorageItem = _GetVoidStorageItem,
 	-- DeleteGuild = _DeleteGuild,
 	GetGuildBankItemCount = _GetGuildBankItemCount,
@@ -1062,6 +1099,8 @@ function addon:OnInitialize()
 	DataStore:SetCharacterBasedMethod("GetNumFreeBagSlots")
 	DataStore:SetCharacterBasedMethod("GetNumBankSlots")
 	DataStore:SetCharacterBasedMethod("GetNumFreeBankSlots")
+    DataStore:SetCharacterBasedMethod("GetNumFreeReagentBankSlots")
+    DataStore:SetCharacterBasedMethod("GetNumFreeVoidStorageSlots")
     DataStore:SetCharacterBasedMethod("ImportBagChanges") 
 	DataStore:SetCharacterBasedMethod("GetVoidStorageItem")
 	
