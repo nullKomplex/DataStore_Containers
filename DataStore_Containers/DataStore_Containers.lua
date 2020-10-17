@@ -857,7 +857,7 @@ end
 
 local function _GetNumFreeReagentBankSlots(character)
     if not character.Containers then return 0 end
-    if not character.Containers[-3] then return 0 end
+    if not character.Containers["Bag-3"] then return 0 end
     return character.Containers["Bag-3"].freeslots
 end
 
@@ -978,6 +978,14 @@ local function _SendBankTabToGuildMember(member, tabName)
 	end
 end
 
+local function _GetSavedGuildKeys()
+    local keys = {}
+    for key in pairs(addon.db.global.Guilds) do
+        table.insert(keys, key)
+    end
+    return keys
+end
+
 local PublicMethods = {
 	GetContainer = _GetContainer,
 	GetContainers = _GetContainers,
@@ -1009,6 +1017,7 @@ local PublicMethods = {
 	RejectBankTabRequest = _RejectBankTabRequest,
 	SendBankTabToGuildMember = _SendBankTabToGuildMember,
 	GetGuildBankTabSuppliers = _GetGuildBankTabSuppliers,
+    GetSavedGuildKeys = _GetSavedGuildKeys,
     ImportBagChanges = _ImportBagChanges, 
 }
 
