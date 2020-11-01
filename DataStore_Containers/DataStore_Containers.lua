@@ -356,7 +356,7 @@ local function ScanContainer(bagID, containerType)
 
 			if link:match("|Hkeystone:") then
 				-- mythic keystones are actually all using the same item id
-				newBag.ids[index] = 138019
+				newBag.ids[index] = 158923
 
 			elseif link:match("|Hbattlepet:") then
 				-- special treatment for battle pets, save texture id instead of item id..
