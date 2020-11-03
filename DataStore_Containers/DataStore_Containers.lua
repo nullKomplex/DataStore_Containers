@@ -32,6 +32,9 @@ local MSG_BANKTAB_TRANSFER						= 6	-- .. or send the data
 
 local VOID_STORAGE_TAB = "VoidStorage.Tab"
 
+local containersScanningTooltip = CreateFrame("GameTooltip", "DataStoreCustomScanTooltipForPets", nil, "GameTooltipTemplate")
+containersScanningTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+
 local AddonDB_Defaults = {
 	global = {
 		Guilds = {
@@ -362,9 +365,25 @@ local function ScanContainer(bagID, containerType)
 				-- special treatment for battle pets, save texture id instead of item id..
 				-- texture, itemCount, locked, quality, readable, _, _, isFiltered, noValue, itemID = GetContainerItemInfo(id, itemButton:GetID());
 				newBag.ids[index] = GetContainerItemInfo(bagID, slotID)
+			elseif link:match("|Hitem:82800") then
+				local texture=GetGuildBankItemInfo(bagID, slotID)
+			
+				containersScanningTooltip:ClearLines()
+				if texture then
+					containersScanningTooltip:ClearLines()
+					local speciesID, level, breedQuality, maxHealth, power, speed, name = containersScanningTooltip:SetGuildBankItem( bagID, slotID )
+					if speciesID then
+						local pet_link = string.format( "|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[%s]|h", speciesID or 0, level or 0, breedQuality or 0, maxHealth or 0, power or 0, speed or 0, name or "" )
+						local color=ITEM_QUALITY_COLORS[breedQuality].hex
+						pet_link = color..pet_link.."|r" 
+						newBag.ids[index] = texture
+						newBag.links[index] = pet_link
+					end
+				end
+				
 			end
 			
-			if IsEnchanted(link) then
+			if IsEnchanted(link) and not link:match("|Hitem:82800") then
 				newBag.links[index] = link
 			end
 		
