@@ -84,6 +84,32 @@ local AddonDB_Defaults = {
 	}
 }
 
+local ReferenceDB_Defaults = {
+	global = {
+        Items = {
+            ['*'] = { -- itemID
+                name = nil,
+                link = nil,
+                rarity = 0,
+                level = 0,
+                minLevel = 0,
+                type = nil,
+                subtype = nil,
+                stackCount = 1,
+                equipLoc = nil,
+                icon = 0,
+                sellPrice = 0,
+                classID = 0,
+                subClassID = 0,
+                bindType = 0,
+                expackID = 0,
+                setID = 0,
+                isCraftingReagent = false,
+            }
+        }
+	}
+}
+
 local function GetDBVersion()
 	return addon.db.global.Version or 0
 end
@@ -391,6 +417,11 @@ local function ScanContainer(bagID, containerType)
 			if count and count > 1  then
 				newBag.counts[index] = count	-- only save the count if it's > 1 (to save some space since a count of 1 is extremely redundant)
 			end
+            
+            local refDB = addon.ref.global.Items[newBag.ids[index]]
+            if not refDB.itemName then
+                refDB.name, refDB.link, refDB.rarity, refDB.level, refDB.minLevel, refDB.type, refDB.subType, refDB.stackCount, refDB.equipLoc, refDB.icon, refDB.sellPrice, refDB.classID, refDB.subClassID, refDB.bindType, refDB.expacID, refDB.setID, refDB.isCraftingReagent = GetItemInfo(link)
+            end
 		end
 		
 		startTime, duration, isEnabled = Container:GetCooldown(slotID, bagID)
@@ -1005,6 +1036,10 @@ local function _GetSavedGuildKeys()
     return keys
 end
 
+local function _GetReferenceItemInfo(itemID)
+    return addon.ref.global.Items[itemID]
+end
+
 local PublicMethods = {
 	GetContainer = _GetContainer,
 	GetContainers = _GetContainers,
@@ -1037,7 +1072,8 @@ local PublicMethods = {
 	SendBankTabToGuildMember = _SendBankTabToGuildMember,
 	GetGuildBankTabSuppliers = _GetGuildBankTabSuppliers,
     GetSavedGuildKeys = _GetSavedGuildKeys,
-    ImportBagChanges = _ImportBagChanges, 
+    ImportBagChanges = _ImportBagChanges,
+    GetReferenceItemInfo = _GetReferenceItemInfo, 
 }
 
 -- *** Guild Comm ***
@@ -1112,6 +1148,7 @@ local GuildCommCallbacks = {
 
 function addon:OnInitialize()
 	addon.db = LibStub("AceDB-3.0"):New(addonName .. "DB", AddonDB_Defaults)
+	addon.ref = LibStub("AceDB-3.0"):New(addonName .. "RefDB", ReferenceDB_Defaults)
 	UpdateDB()
 
 	DataStore:RegisterModule(addonName, addon, PublicMethods)

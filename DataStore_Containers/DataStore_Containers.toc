@@ -5,7 +5,7 @@
 ## Version: @project-version@
 ## Dependencies: DataStore
 ## OptionalDeps: Ace3
-## SavedVariables: DataStore_ContainersDB
+## SavedVariables: DataStore_ContainersDB, DataStore_ContainersRefDB
 ## X-Category: Interface Enhancements
 ## X-Embeds: Ace3
 ## X-Curse-Project-ID: 19872
