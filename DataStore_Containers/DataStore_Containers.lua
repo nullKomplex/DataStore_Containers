@@ -419,7 +419,7 @@ local function ScanContainer(bagID, containerType)
 			end
             
             local refDB = addon.ref.global.Items[newBag.ids[index]]
-            if not refDB.itemName then
+            if refDB and (not refDB.itemName) then
                 refDB.name, refDB.link, refDB.rarity, refDB.level, refDB.minLevel, refDB.type, refDB.subType, refDB.stackCount, refDB.equipLoc, refDB.icon, refDB.sellPrice, refDB.classID, refDB.subClassID, refDB.bindType, refDB.expacID, refDB.setID, refDB.isCraftingReagent = GetItemInfo(link)
             end
 		end
