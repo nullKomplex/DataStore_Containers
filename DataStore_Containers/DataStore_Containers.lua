@@ -87,7 +87,9 @@ local AddonDB_Defaults = {
 local ReferenceDB_Defaults = {
 	global = {
         Items = {
-            ['*'] = { -- itemID
+            ['*'] = nil 
+            --[[ Serialized String, containing:
+            { -- itemID
                 name = nil,
                 link = nil,
                 rarity = 0,
@@ -106,6 +108,7 @@ local ReferenceDB_Defaults = {
                 setID = 0,
                 isCraftingReagent = false,
             }
+            ]]--
         }
 	}
 }
@@ -340,6 +343,17 @@ local function detectBagChanges(originalBag, newBag)
     return changes
 end
 
+local function _CacheItemID(itemID)
+    if not itemID then return end
+    if addon.ref.global.Items[itemID] then
+        local info = {}
+        info.name, info.link, info.rarity, info.level, info.minLevel, info.type, info.subType, info.stackCount, info.equipLoc, info.icon, info.sellPrice, info.classID, info.subClassID, info.bindType, info.expacID, info.setID, info.isCraftingReagent = GetItemInfo(itemID)
+        if info.name then
+            addon.ref.global.Items[itemID] = addon:Serialize(info)
+        end
+    end
+end
+
 -- *** Scanning functions ***
 local function ScanContainer(bagID, containerType)
 	local Container = ContainerTypes[containerType]
@@ -418,10 +432,7 @@ local function ScanContainer(bagID, containerType)
 				newBag.counts[index] = count	-- only save the count if it's > 1 (to save some space since a count of 1 is extremely redundant)
 			end
             
-            local refDB = addon.ref.global.Items[newBag.ids[index]]
-            if refDB and (not refDB.itemName) then
-                refDB.name, refDB.link, refDB.rarity, refDB.level, refDB.minLevel, refDB.type, refDB.subType, refDB.stackCount, refDB.equipLoc, refDB.icon, refDB.sellPrice, refDB.classID, refDB.subClassID, refDB.bindType, refDB.expacID, refDB.setID, refDB.isCraftingReagent = GetItemInfo(link)
-            end
+            _CacheItemID(newBag.ids[index])
 		end
 		
 		startTime, duration, isEnabled = Container:GetCooldown(slotID, bagID)
@@ -1037,8 +1048,32 @@ local function _GetSavedGuildKeys()
 end
 
 local function _GetReferenceItemInfo(itemID)
-    return addon.ref.global.Items[itemID]
+    local ref = addon.ref.global.Items[itemID]
+    if not ref then return end
+    if type(ref) == "table" then return ref end
+    if type(ref) == "string" then
+        local result, ref = addon:Deserialize(ref)
+        --[[if not result then --debug
+            print(ref)
+        end]]--
+        return ref
+    end
 end
+
+--[[debug purposes only
+local function _CacheAllItems()
+    for accountName in pairs(DataStore:GetAccounts()) do
+        for realmName in pairs(DataStore:GetRealms(accountName)) do
+            for charName,character in pairs(DataStore:GetCharacters(realmName, accountName)) do
+                for g,h in pairs(DataStore:GetContainers(character)) do
+                    for i,j in pairs(h.ids) do
+                        _CacheItemID(j)
+                    end
+                end
+            end
+        end
+    end
+end]]--
 
 local PublicMethods = {
 	GetContainer = _GetContainer,
@@ -1073,7 +1108,9 @@ local PublicMethods = {
 	GetGuildBankTabSuppliers = _GetGuildBankTabSuppliers,
     GetSavedGuildKeys = _GetSavedGuildKeys,
     ImportBagChanges = _ImportBagChanges,
-    GetReferenceItemInfo = _GetReferenceItemInfo, 
+    GetReferenceItemInfo = _GetReferenceItemInfo,
+    CacheItemID = _CacheItemID,
+    --CacheAllItems = _CacheAllItems, 
 }
 
 -- *** Guild Comm ***
